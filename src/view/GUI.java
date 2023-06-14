@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -17,17 +18,23 @@ public class GUI extends JFrame {
     private JLabel enterText;
     private FileManager nameUser;
     private Header headerProject;
+    private JPanel squareColor;
+    private Timer timer;
     private JTextField nickName;
     private Escucha escucha;
     private JButton start;
+    private JPanel panel;
+    private JLabel label;
+    private ArrayList<String> words;
     private int counter;
 
+    private int currentIndex;
     /**
      * Constructor of GUI class
      */
     public GUI(){
 
-       // initGUI();
+        initGUI();
         //Default JFrame configuration
         this.setTitle("I Know That Word");
         this.setSize(400,400);
@@ -43,23 +50,32 @@ public class GUI extends JFrame {
      * create Listener and control Objects used for the GUI class
      */
     private void initGUI() {
-        counter = 0;
-        //Set up JFrame Container's Layout
-        //Create Listener Object and Control Object
-        enterText = new JLabel("Enter a nickname");
 
         nameUser = new FileManager();
         escucha = new Escucha();
-        //Set up JComponents
+        counter = 0;
+
+        panel = new JPanel();
+        panel.setLayout(null);
+        enterText = new JLabel("Enter a nickname");
+        enterText.setBounds(50, 20, 200, 30);
+        panel.add(enterText);
+
+
         headerProject = new Header("I Know That Word", Color.BLACK);
-        this.add(headerProject,BorderLayout.NORTH); //Change this line if you change JFrame Container's Layout
+        this.add(headerProject,BorderLayout.NORTH);
+
         nickName = new JTextField();
         nickName.setBounds(50, 50, 200, 30);
-        this.add(nickName);
+        nickName.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        panel.add(nickName);
 
         start = new JButton("Start");
         start.addActionListener(escucha);
-        this.add(start, BorderLayout.SOUTH);
+        start.setBounds(50, 90, 100, 30);
+        panel.add(start);
+
+        this.add(panel, BorderLayout.CENTER);
 
     }
 
@@ -72,8 +88,38 @@ public class GUI extends JFrame {
         EventQueue.invokeLater(() -> {
             GUI miProjectGUI = new GUI();
         });
-        Nickname name = new Nickname();
+
     }
+
+    public void WordPanel() {
+        words = nameUser.getRandomWords();
+        currentIndex = 0;
+
+        setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        label = new JLabel();
+        label.setFont(new Font("Arial", Font.BOLD, 24));
+        add(label);
+
+        timer = new Timer(5000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentIndex < words.size()) {
+                    label.setText(words.get(currentIndex));
+                    currentIndex++;
+                } else {
+                    timer.stop();
+                }
+            }
+        });
+    }
+
+    public void startTimer() {
+        currentIndex = 0;
+        timer.start();
+    }
+
+
+
 
     private void CheckRecord () {
         if (nickName.getText().contains(" ") || nickName.getText().isEmpty() || nickName.getText() == null) {
@@ -82,7 +128,13 @@ public class GUI extends JFrame {
         } else {
            // System.out.println("Ingreso al else");
             nameUser.readUsers(nickName.getText());
-           //nameUser.writer(nickName.getText());
+            this.remove(panel);
+            this.revalidate();
+            this.repaint();
+            this.WordPanel();
+            this.startTimer();
+
+            //nameUser.writer(nickName.getText());
 
         }
     }

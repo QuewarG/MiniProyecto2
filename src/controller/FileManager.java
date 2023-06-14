@@ -1,12 +1,10 @@
 package controller;
 
 import model.ModelFile;
-import org.w3c.dom.css.Counter;
 
-import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Random;
 
 public class FileManager {
     private FileReader fileReader;
@@ -14,21 +12,21 @@ public class FileManager {
     private FileWriter fileWriter;
     private BufferedWriter output;
     private ModelFile model;
-    private static List<String> names;
-
+    private static ArrayList<String> names, words;
     private static boolean esta;
     private int counter;
-    public String reader(){
+    private Level level;
+
+    public ArrayList<String> readWords(){
         String text = "";
 
         try {
+            words= new ArrayList<>();
             fileReader = new FileReader("src/resources/words.txt");
             input = new BufferedReader(fileReader);
             String line = input.readLine();
             while(line != null){
-                System.out.println("Estoy dentro de la excepcion 2");
-                text += line;
-                text += "\n";
+                words.add(line);
                 line = input.readLine();
             }
         } catch (FileNotFoundException e) { // Entra a esta seccion cuando no encuentra el archivo
@@ -48,76 +46,116 @@ public class FileManager {
             }
         }
 
-        return text;
+        return words;
     }
 
-    public int countLines() {
+    public ArrayList<String> getRandomWords() {
+        this.readWords();
+        model = new ModelFile();
+        ArrayList<String> randomWords = new ArrayList<>();
+        Random random = new Random();
+        int numWords = 0;
+        System.out.println("Lllego aca" + model.getLevel());
+        if(model.getLevel()==1){
+            numWords =20;
+        }
+        if(model.getLevel()==2){
+            numWords =40;
+        }
+        if(model.getLevel()==3){
+            numWords =60;
+        }
+        if(model.getLevel()==4){
+            numWords =80;
+        }
+        if(model.getLevel()==5){
+            numWords =100;
+        }
+        if(model.getLevel()==6){
+            numWords =120;
+        }
+        if(model.getLevel()==7){
+            numWords =140;
+        }
+        if(model.getLevel()==8){
+            numWords =160;
+        }
+
+        for (int i = 0; i < numWords; i++) {
+            int randomIndex = random.nextInt(words.size());
+            String randomWord = words.get(randomIndex);
+            randomWords.add(randomWord);
+        }
+
+        return randomWords;
+    }
+
+
+    //Permite contar cuantos registros existen en el archivo y asignarlos en un ArrayList
+    public int readerUsers(String Users) {
         int lineCount = 0;
+        level = new Level();
+        names = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader("src/resources/users.txt"))) {
                 String line;
-                if ((line = br.readLine()) != null) {
+                while ((line = br.readLine()) != null) {
                     lineCount++;
-                    System.out.println("Ingreso en la linea "  + line );
-                    esta=true;
+                    names.add(line);
+                    System.out.println("Encontro el nombre de:"  + line );
             }
-            /*if(line==null){
+            if(lineCount==0){
                 this.writer(Users);
-                esta = false;
-                System.out.println("No esta registrado el usuario " );
-            }*/
-
+                level.readerLevel(0);
+                level.state2=false;
+                System.out.println("No esta registrado el usuario: " + Users);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
         return lineCount;
     }
 
-    public void readUsers(String Users){
-        counter = this.countLines();
-        names = new ArrayList<>();
-        model = new ModelFile();
-        try{
-            int k =0;
-            if(esta==false){
-                names.add(Users);
-            }if(esta==true){
-                fileReader = new FileReader("src/resources/users.txt");
-                input = new BufferedReader(fileReader);
-                String lineas = input.readLine();
-                String text = "";
-                while (lineas  != null && k<counter) {
-                    if(lineas.equals(Users)){
-                        text = model.getName(Users);
-                        System.out.println("Estoy dentro del if de la funcion readUsers " +text);
-                        k++;
-                        break;
-                    }
-                    k++;
-                }
 
-                }else{
-                System.out.println("no esta el registro");
+    //Permite validar si existe el registro en el arreglo
+    public void readUsers(String Users){
+        try{
+            counter = this.readerUsers(Users);
+            model = new ModelFile();
+            esta = names.contains(Users);
+            level = new Level();
+            if(esta){
+                model.posicion = names.indexOf(Users);
+                level.readerLevel(model.getPosicion());
+                System.out.println("El usuario existe: " +Users+ " " + model.getPosicion());
+
+            }else if(counter!=0){
+                this.writer(Users);
+                System.out.println("No se encontro el nombre y se agrego: " +Users);
+                names.add(Users);
+                model.name = Users;
+                model.posicion = names.indexOf(Users);
+                level.state2=false;
+                level.readerLevel(model.posicion);
+                System.out.println("Banderazo " + model.getPosicion());
 
             }
 
-        }catch (FileNotFoundException e){
-
-        }catch (IOException e){
+        }catch (Exception e){
 
         }
     }
 
 
 
-
+    //Escribe en el archivo.
     public void writer(String line){
+        model = new ModelFile();
         try {
-            String text = "";
-            text += line ;
-            text += "\n";
-            fileWriter = new FileWriter("src/resources/users.txt");
+            fileWriter = new FileWriter("src/resources/users.txt", true);
             output = new BufferedWriter(fileWriter);
-            output.write(text);
+            output.write(line);
+            output.newLine();
+            //this.readerUsers(line);
         } catch (IOException e){
             e.printStackTrace();
         }finally {
